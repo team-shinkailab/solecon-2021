@@ -22,7 +22,7 @@ SoftwareSerial im920(IM920_TXPIN, IM920_RXPIN);
 void SW_Init()
 {
   appData.advalExist = false;
-  appData.op_mode = 0;
+  appData.op_mode = 0;                  //本番では削除可能
   appData.im920RxDisp = PRM_Rd_Disp();
 }
 

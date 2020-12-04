@@ -30,8 +30,8 @@ static uint8_t USBRX_ENJKN(void);
  * @memo CMD_DICTIONARYはheaderで定義
  */
 static const CMD_DICTIONARY cmdDict[CMDNUM]{
-  {(char*)"SETIM", USBRX_SETIM},  {(char*)"RDALL", USBRX_RDALL},  {(char*)"SWRST", USBRX_SWRST},
-  {(char*)"PMCLR", USBRX_PMCLR},  {(char*)"WRMDL", USBRX_WRMDL},  {(char*)"WRRNG", USBRX_WRRNG},
+  {(char*)"RDALL", USBRX_RDALL},  {(char*)"SWRST", USBRX_SWRST},  {(char*)"PMCLR", USBRX_PMCLR},
+  {(char*)"SETIM", USBRX_SETIM},  {(char*)"WRMDL", USBRX_WRMDL},  {(char*)"WRRNG", USBRX_WRRNG},
   {(char*)"ENDSP", USBRX_ENDSP},  {(char*)"DSDSP", USBRX_DSDSP},  {(char*)"ENJKN", USBRX_ENJKN}
 };
 static char cmd[20];
@@ -69,10 +69,11 @@ static uint8_t scan_cmd(void)
 void USBRX_dataParse(void)
 {
   char wk;
-  uint8_t noErr, cmdnum, done;
+  uint8_t cmdnum, done;
+  bool noErr;
   
   while (!appData.usbRxEmpty) {
-    noErr = 1;  done = 0;
+    noErr = true;  done = RESP_ERROR;
     wk = USB_RX_pop();              //データを1Byte取り出す
     Serial.print(wk);
     wk = toupper(wk);               //小文字を大文字に
@@ -80,17 +81,17 @@ void USBRX_dataParse(void)
       if (cmdLen < CMDLEN)
         cmd[cmdLen++] = wk;
       else
-        noErr = 0;
-    } else if ('-'==wk) {           //最初は符号でもOK
+        noErr = false;
+    } else if ('-'==wk || '+'==wk) {           //最初は符号でもOK
       if (CMDLEN == cmdLen)
         cmd[cmdLen++] = wk;
       else
-        noErr = 0;      
+        noErr = false;      
     } else if ('0'<=wk&&wk<='9') {  //以降は数値
       if (CMDLEN<=cmdLen && cmdLen<CMDMAXLEN)
         cmd[cmdLen++] = wk;
       else
-        noErr = 0;
+        noErr = false;
     } else if ('\r' == wk) {        //最後はCR+
       cmd[cmdLen++] = wk;
       dlmtStateMac++;
@@ -102,9 +103,9 @@ void USBRX_dataParse(void)
           done = cmdDict[cmdnum].func();       //コマンド実行
         }
       }
-      noErr = 0;
+      noErr = false;
     } else {
-      noErr = 0;
+      noErr = false;
     }
     if (!noErr) {
       cmdLen = 0;
