@@ -138,8 +138,8 @@ void IM920_ADParse(uint8_t dt)
         if (bendStmc == 0x0A)
             appData.adRawVal[1] += (htoi_org(buf) * 256);
     } else if (bendStmc == 0x0B) {
-        //if (dt == '\n') {
-        if (dt == ',') {
+        if (dt == '\n') {
+        //if (dt == ',') {
             bendStmc = 0xFF;
             appData.advalExist = true;
             Serial.print("Val1 [V]: ");

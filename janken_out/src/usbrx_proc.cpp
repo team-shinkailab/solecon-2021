@@ -11,6 +11,7 @@
 #include "usbrx_proc.h"
 #include "drv_usbSTM32duino.h"
 #include "drv_flashSTM32duino.h"
+#include "janken_proc.h"
 
 //内部関数
 static uint8_t scan_cmd(void);
@@ -22,6 +23,7 @@ static uint8_t USBRX_WRMDL(void);
 static uint8_t USBRX_WRRNG(void);
 static uint8_t USBRX_ENDSP(void);
 static uint8_t USBRX_DSDSP(void);
+static uint8_t USBRX_ENJKN(void);
 
 //内部変数
 /* @brief コマンド用辞書
@@ -30,7 +32,7 @@ static uint8_t USBRX_DSDSP(void);
 static const CMD_DICTIONARY cmdDict[CMDNUM]{
   {(char*)"SETIM", USBRX_SETIM},  {(char*)"RDALL", USBRX_RDALL},  {(char*)"SWRST", USBRX_SWRST},
   {(char*)"PMCLR", USBRX_PMCLR},  {(char*)"WRMDL", USBRX_WRMDL},  {(char*)"WRRNG", USBRX_WRRNG},
-  {(char*)"ENDSP", USBRX_ENDSP},  {(char*)"DSDSP", USBRX_DSDSP}
+  {(char*)"ENDSP", USBRX_ENDSP},  {(char*)"DSDSP", USBRX_DSDSP},  {(char*)"ENJKN", USBRX_ENJKN}
 };
 static char cmd[20];
 static uint8_t cmdLen;
@@ -162,7 +164,7 @@ static uint8_t USBRX_WRMDL(void)
 {
   char buf[6];
   uint8_t wk, i, j=0;
-  uint64_t newval;
+  int newval;
   for (i=CMDLEN; i<CMDMAXLEN; i++) {
     wk = cmd[i];
     if ('\r' == wk)
@@ -187,7 +189,7 @@ static uint8_t USBRX_WRRNG(void)
 {
   char buf[6];
   uint8_t wk, i, j=0;
-  uint64_t newval;
+  int newval;
   for (i=CMDLEN; i<CMDMAXLEN; i++) {
     wk = cmd[i];
     if ('\r' == wk)
@@ -225,5 +227,14 @@ static uint8_t USBRX_DSDSP(void)
   Serial.flush();
   PRM_Wr_Disp(0);
   appData.im920RxDisp = 0;
+  return RESP_OK;
+}
+
+/* @brief じゃんけん判定開始
+ * @memo テスト用
+ */
+static uint8_t USBRX_ENJKN(void)
+{
+  JKN_EnableIdentify();
   return RESP_OK;
 }

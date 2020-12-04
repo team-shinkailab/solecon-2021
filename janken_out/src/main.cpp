@@ -47,15 +47,17 @@ void loop()
     
     if (appData.advalExist) {
       appData.advalExist = false;
-      wk = JKN_PoseJudge();
+      wk = JKN_PoseIdentify();               
       if (wk == POSE_RCK)
         Serial.println("Gu-");
       else if (wk == POSE_SSR)
         Serial.println("Choki");
       else if (wk == POSE_PPR)
         Serial.println("Pa-");
-      else
+      else if (wk == POSE_NONE)
         Serial.println("Yamero");
+      //else if (wk == JUDGE_STOP)
+      //  Serial.println("Stop Now");
     }
 
 

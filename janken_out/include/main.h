@@ -27,7 +27,7 @@
 #define def_POS_RNG     1
 
 typedef enum {
-    POSE_NONE, POSE_RCK, POSE_SSR, POSE_PPR
+    POSE_NONE, POSE_RCK, POSE_SSR, POSE_PPR, JUDGE_STOP
 } JANKEN_POSE;
 
 typedef struct {

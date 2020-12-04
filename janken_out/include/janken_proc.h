@@ -4,4 +4,6 @@
 #include "main.h"
 
 
-uint8_t JKN_PoseJudge(void);
+void JKN_EnableIdentify(void);
+void JKN_DisableIdentify(void);
+uint8_t JKN_PoseIdentify(void);

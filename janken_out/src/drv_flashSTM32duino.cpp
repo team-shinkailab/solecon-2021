@@ -57,6 +57,7 @@ void PRM_Init(void)
   Serial.println("--- Parameter ---");
   PRM_print();
   Serial.println("-----------------");
+  Serial.flush();
 }
 
 /* @brief 全パラメータの表示
