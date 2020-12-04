@@ -71,7 +71,7 @@ void USBRX_dataParse(void)
   
   while (!appData.usbRxEmpty) {
     noErr = 1;  done = 0;
-    wk = USB_RX_pop();              //小文字を大文字に
+    wk = USB_RX_pop();              //データを1Byte取り出す
     Serial.print(wk);
     wk = toupper(wk);               //小文字を大文字に
     if ('A'<=wk&&wk<='Z') {         //5文字目までは英語を待つ

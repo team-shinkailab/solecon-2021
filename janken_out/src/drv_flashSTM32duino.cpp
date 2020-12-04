@@ -13,7 +13,6 @@
 
 #include "drv_flashSTM32duino.h"
 
-#define DBG_BLCK_PIRNT  0 //0=通常, 1=画面表示
 
 //内部変数
 static PARAM prm;
@@ -51,7 +50,9 @@ void PRM_Init(void)
     PRM_Reset();
     Serial.println("First Stratup");
   } else {
-    //PRM_Wr_Startup(PRM_Rd_Startup()+1);
+#if DBG_BLCK_PIRNT == 1
+    PRM_Wr_Startup(PRM_Rd_Startup()+1);
+#endif
   }
   Serial.println("--- Parameter ---");
   PRM_print();
@@ -62,8 +63,10 @@ void PRM_Init(void)
 */
 void PRM_print(void)
 {
-  //Serial.print("起動回数 : ");
-  //Serial.println(PRM_Rd_Startup());
+#if DBG_BLCK_PIRNT == 1
+  Serial.print("StartupNum : ");
+  Serial.println(PRM_Rd_Startup());
+#endif
   Serial.print("Mdl Finger Threshold[AD val] : ");
   Serial.println(PRM_Rd_Middle());
   Serial.print("Rng Finger Threshold[AD val] : ");

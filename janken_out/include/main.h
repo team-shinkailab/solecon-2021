@@ -6,7 +6,8 @@
 
 #include "common_defs.h"
 
-//使用するボード
+//debug
+#define DBG_BLCK_PIRNT  0       //通常は0
 
 //hardware
 #define IM920_BUSYPIN   D10
@@ -20,8 +21,8 @@
 #define def_RNG_USBRX   0x0200  //[Byte]
 #define def_RNG_IMRX    0x0200  //[Byte]
 #define def_TXNODE      "0002"  //子機のノード番号
-#define def_INIT_MDL    15241   //中指がこれ以下のAD値なら曲がっていると判断(=1V=15241/65536*4.3)
-#define def_INIT_RNG    15241   //薬指がこれ以下のAD値なら曲がっていると判断(=1V=15241/65536*4.3)
+#define def_INIT_MDL    36000   //中指AD値の閾値テキトーな初期値(=2.36V=36000/65536*4.3) これ以上なら曲がってる
+#define def_INIT_RNG    36000   //薬指AD値の閾値テキトーな初期値(=2.36V=36000/65536*4.3)
 #define def_POS_MDL     0
 #define def_POS_RNG     1
 
@@ -41,9 +42,9 @@ typedef struct {
     bool usbRxEmpty;      bool usbRxFull;
 
     //その他
-    uint8_t advalExist;
-    uint8_t op_mode;
+    bool advalExist;
     uint16_t adRawVal[2];
+    uint8_t op_mode;
     uint8_t im920RxDisp;
 } APP_DATA;
 

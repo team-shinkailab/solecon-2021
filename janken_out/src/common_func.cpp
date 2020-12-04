@@ -1,8 +1,6 @@
 //
-//  common_func.c : common surpport functions for CC1310
+//  common_func.c : common surpport functions
 //
-//  Ver.0.00    2015/4/7
-//  Ver.0.01	2017/8/22	CC1310ópdelayä÷êîÇí«â¡
 //
 
 #include "common_defs.h"

@@ -3,7 +3,8 @@
 //--------------------------------------------------------------------
 // Version    | Date       | Auther | Details
 //--------------------------------------------------------------------
-// Ver. 00.01 | 2020/11/24 | Oshiba | test version
+// Ver. 00.01 | 2020/11/24 | Oshiba | test version (L476RG)
+// Ver. 00.02 | 2020/12/04 | Oshiba | F401RE board is now supported.
 //--------------------------------------------------------------------
 //
 // (c)Team Shinkai Lab
@@ -20,7 +21,7 @@ SoftwareSerial im920(IM920_TXPIN, IM920_RXPIN);
 
 void SW_Init()
 {
-  appData.advalExist = 0;
+  appData.advalExist = false;
   appData.op_mode = 0;
   appData.im920RxDisp = PRM_Rd_Disp();
 }
@@ -45,7 +46,7 @@ void loop()
       USBRX_dataParse();
     
     if (appData.advalExist) {
-      appData.advalExist = 0;
+      appData.advalExist = false;
       wk = JKN_PoseJudge();
       if (wk == POSE_RCK)
         Serial.println("Gu-");
@@ -59,7 +60,7 @@ void loop()
 
 
 //***********************************************
-// 大柴テスト用(無線モジュールと直接通信する)
+// IM920s設定モード(無線モジュールと直接通信する)
 // 解除はPORのみ, 本番用では削除可能
 //***********************************************
   } else if (appData.op_mode == 1) {
