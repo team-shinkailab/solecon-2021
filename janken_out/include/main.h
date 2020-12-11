@@ -41,6 +41,13 @@ typedef struct {
     uint16_t usbRxHead;   uint16_t usbRxTail;
     bool usbRxEmpty;      bool usbRxFull;
 
+    //平均値計測用
+    uint8_t startAvgMode;
+    uint16_t avgRecNum;
+    uint64_t adSumVal[2];
+    uint64_t adMaxVal[2];
+    uint64_t adMinVal[2];
+
     //その他
     bool advalExist;
     uint16_t adRawVal[2];

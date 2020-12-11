@@ -4,6 +4,7 @@
 // Version    | Date       | Auther | Details
 //--------------------------------------------------------------------
 // Ver. 00.01 | 2020/11/24 | Oshiba | test version
+// Ver. 00.03 | 2020/12/11 | Oshiba | テストモード用コマンド追加
 //--------------------------------------------------------------------
 //
 // (c)Team Shinkai Lab
@@ -24,6 +25,8 @@ static uint8_t USBRX_WRRNG(void);
 static uint8_t USBRX_ENDSP(void);
 static uint8_t USBRX_DSDSP(void);
 static uint8_t USBRX_ENJKN(void);
+static uint8_t USBRX_WRAVG(void);
+static uint8_t USBRX_GOAVG(void);
 
 //内部変数
 /* @brief コマンド用辞書
@@ -32,11 +35,13 @@ static uint8_t USBRX_ENJKN(void);
 static const CMD_DICTIONARY cmdDict[CMDNUM]{
   {(char*)"RDALL", USBRX_RDALL},  {(char*)"SWRST", USBRX_SWRST},  {(char*)"PMCLR", USBRX_PMCLR},
   {(char*)"SETIM", USBRX_SETIM},  {(char*)"WRMDL", USBRX_WRMDL},  {(char*)"WRRNG", USBRX_WRRNG},
-  {(char*)"ENDSP", USBRX_ENDSP},  {(char*)"DSDSP", USBRX_DSDSP},  {(char*)"ENJKN", USBRX_ENJKN}
+  {(char*)"ENDSP", USBRX_ENDSP},  {(char*)"DSDSP", USBRX_DSDSP},  {(char*)"ENJKN", USBRX_ENJKN},
+  {(char*)"WRAVG", USBRX_WRAVG},  {(char*)"GOAVG", USBRX_GOAVG}
 };
 static char cmd[20];
 static uint8_t cmdLen;
 static uint8_t dlmtStateMac;
+static uint8_t avgEnterStmc;    
 
 /* @brief コマンド待ち開始
  */
@@ -44,6 +49,7 @@ void USBRX_Init(void)
 {
   cmdLen = 0;
   dlmtStateMac = 0;
+  avgEnterStmc = 0;
 }
 
 /* @brief コマンドを調べる
@@ -76,46 +82,57 @@ void USBRX_dataParse(void)
     noErr = true;  done = RESP_ERROR;
     wk = USB_RX_pop();              //データを1Byte取り出す
     Serial.print(wk);
-    wk = toupper(wk);               //小文字を大文字に
-    if ('A'<=wk&&wk<='Z') {         //5文字目までは英語を待つ
-      if (cmdLen < CMDLEN)
+//Ver. 00.03・・・テスト時と通常時で使い分ける
+    if (appData.op_mode != 2) {     //通常時
+      wk = toupper(wk);               //小文字を大文字に
+      if ('A'<=wk&&wk<='Z') {         //5文字目までは英語を待つ
+        if (cmdLen < CMDLEN)
+          cmd[cmdLen++] = wk;
+        else
+          noErr = false;
+      } else if ('-'==wk || '+'==wk) {           //最初は符号でもOK
+        if (CMDLEN == cmdLen)
+          cmd[cmdLen++] = wk;
+        else
+          noErr = false;      
+      } else if ('0'<=wk&&wk<='9') {  //以降は数値
+        if (CMDLEN<=cmdLen && cmdLen<CMDMAXLEN)
+          cmd[cmdLen++] = wk;
+        else
+          noErr = false;
+      } else if ('\r' == wk) {        //最後はCR+
         cmd[cmdLen++] = wk;
-      else
+        dlmtStateMac++;
+      } else if ('\n' == wk) {        //LF
+        cmd[cmdLen++] = wk;
+        if ((1==dlmtStateMac) && (cmdLen>=CMDLEN)) {
+          cmdnum = scan_cmd();
+          if (cmdnum != CMDNUM) {
+            done = cmdDict[cmdnum].func();       //コマンド実行
+          }
+        }
         noErr = false;
-    } else if ('-'==wk || '+'==wk) {           //最初は符号でもOK
-      if (CMDLEN == cmdLen)
-        cmd[cmdLen++] = wk;
-      else
-        noErr = false;      
-    } else if ('0'<=wk&&wk<='9') {  //以降は数値
-      if (CMDLEN<=cmdLen && cmdLen<CMDMAXLEN)
-        cmd[cmdLen++] = wk;
-      else
+      } else {
         noErr = false;
-    } else if ('\r' == wk) {        //最後はCR+
-      cmd[cmdLen++] = wk;
-      dlmtStateMac++;
-    } else if ('\n' == wk) {        //LF
-      cmd[cmdLen++] = wk;
-      if ((1==dlmtStateMac) && (cmdLen>=CMDLEN)) {
-        cmdnum = scan_cmd();
-        if (cmdnum != CMDNUM) {
-          done = cmdDict[cmdnum].func();       //コマンド実行
+      }
+      if (!noErr) {
+        cmdLen = 0;
+        dlmtStateMac = 0x00;
+        if (done == RESP_ERROR)                 //doneならコマンド成功
+          Serial.println("\r\nERROR");
+        else if (done == RESP_OK) 
+          Serial.println("OK");
+        else if (done == RESP_NO) {
+
         }
       }
-      noErr = false;
-    } else {
-      noErr = false;
-    }
-    if (!noErr) {
-      cmdLen = 0;
-      dlmtStateMac = 0x00;
-      if (done == RESP_ERROR)                 //doneならコマンド成功
-        Serial.println("\r\nERROR");
-      else if (done == RESP_OK) 
-        Serial.println("OK");
-      else if (done == RESP_NO) {
 
+    } else if (appData.op_mode == 2) {    //平均回数
+      if (avgEnterStmc == 0x00) {
+          if (wk =='\r')  avgEnterStmc = 0x01;
+      } else if (avgEnterStmc == 0x01) {
+          if (wk == '\n') appData.startAvgMode = 1;
+          avgEnterStmc = 0x00;
       }
     }
   }
@@ -239,3 +256,47 @@ static uint8_t USBRX_ENJKN(void)
   JKN_EnableIdentify();
   return RESP_OK;
 }
+
+// ↓↓Ver. 00.03・・・追加↓↓
+/* @brief 平均回数設定
+ * @memo テスト用
+ */
+static uint8_t USBRX_WRAVG(void)
+{
+  char buf[6];
+  uint8_t wk, i, j=0;
+  int newval;
+  for (i=CMDLEN; i<CMDMAXLEN; i++) {
+    wk = cmd[i];
+    if ('\r' == wk)
+      break;
+    else
+      buf[j++] = wk;
+  }
+  newval = (uint16_t) atoi(buf);
+  if (newval <= 500) {
+    Serial.println("Save Now...");
+    Serial.flush();
+    PRM_Wr_AvgNum(newval);
+    return RESP_OK;
+  } else {
+    return RESP_ERROR;
+  }
+}
+
+
+/* @brief 平均回数測定モード
+ * @memo テスト用
+ */
+static uint8_t USBRX_GOAVG(void)
+{
+  appData.op_mode = 2;          appData.startAvgMode = 0;
+  appData.avgRecNum = 0;        
+  appData.adSumVal[0] = 0;      appData.adSumVal[1] = 0;
+  appData.adMaxVal[0] = 0;      appData.adMaxVal[1] = 0;
+  appData.adMinVal[0] = 0xFFFF; appData.adMinVal[1] = 0xFFFF;
+  Serial.println("Measuring Average Mode");
+  Serial.print("press the enter key.");
+  return RESP_NO;
+}
+// ↑↑Ver. 00.03・・・追加↑↑

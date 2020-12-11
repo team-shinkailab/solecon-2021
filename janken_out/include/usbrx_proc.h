@@ -4,7 +4,7 @@
 #include "main.h"
 
 
-#define CMDNUM    0x09  //コマンドの数
+#define CMDNUM    0x0B  //コマンドの数
 #define CMDLEN    0x05  //コマンドの英語部分の長さ
 #define CMDMAXLEN 0x0A  //\r\n以外のコマンド長
 

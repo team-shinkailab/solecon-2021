@@ -5,6 +5,7 @@
 //--------------------------------------------------------------------
 // Ver. 00.01 | 2020/11/24 | Oshiba | test version
 // Ver. 00.02 | 2020/12/04 | Oshiba | 識別のストップ/スタートを追加
+// Ver. 00.03 | 2020/12/11 | Oshiba | テストモード追加
 //--------------------------------------------------------------------
 //
 // (c)Team Shinkai Lab
@@ -27,6 +28,7 @@ void JKN_DisableIdentify(void)
 {
     judge = false;
 }
+
 /* @brief じゃんけんの形を識別する
  * @return JANKEN_POSE じゃんけんの形
  */
@@ -52,4 +54,46 @@ uint8_t JKN_PoseIdentify(void)
     }
 
     return JUDGE_STOP;
+}
+
+// Ver. 00.03・・・追加
+/* @brief AD値の平均、最大値、最小値を調査する
+ */
+void JKN_MeasurementAdval(void)
+{
+    uint8_t i;
+    appData.avgRecNum++;
+    for (i=0; i<2; i++) {
+        appData.adSumVal[i] += appData.adRawVal[i];         //合計
+        if (appData.adMaxVal[i] < appData.adRawVal[i]) {    //最大値
+            appData.adMaxVal[i] = appData.adRawVal[i];
+        }
+        if (appData.adMinVal[i] > appData.adRawVal[i]) {    //最小値
+            appData.adMinVal[i] = appData.adRawVal[i];
+        }
+    }
+
+    if (appData.avgRecNum >= PRM_Rd_AvgNum()) {
+        Serial.println("--- Average --- ");
+        Serial.print("Val1 [AD Val]: ");
+        Serial.println(appData.adSumVal[0] / appData.avgRecNum);
+        Serial.print("Val2 [AD Val]: ");
+        Serial.println(appData.adSumVal[1] / appData.avgRecNum);
+        Serial.println();
+        Serial.println("--- Maximum --- ");
+        Serial.print("Val1 [AD Val]: ");
+        Serial.println(appData.adMaxVal[0]);
+        Serial.print("Val2 [AD Val]: ");
+        Serial.println(appData.adMaxVal[1]);
+        Serial.println();
+        Serial.println("--- Minimum --- ");
+        Serial.print("Val1 [AD Val]: ");
+        Serial.println(appData.adMaxVal[0]);
+        Serial.print("Val2 [AD Val]: ");
+        Serial.println(appData.adMaxVal[1]);
+        Serial.println();
+        Serial.println("Exit the average measurement mode.");
+        delay(5000);
+        appData.op_mode = 0;
+    }
 }

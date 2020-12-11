@@ -5,6 +5,7 @@
 // Version    | Date       | Auther | Details
 //--------------------------------------------------------------------
 // Ver. 00.01 | 2020/11/24 | Oshiba | test version
+// Ver. 00.03 | 2020/12/11 | Oshiba | 微調整
 //--------------------------------------------------------------------
 //
 // (c)Team Shinkai Lab
@@ -51,14 +52,14 @@ void IM920_RxParse(uint8_t disp)
         if (disp)
             Serial.printf("%c", wk);
 
-        if (bendStmc != 0xFF)
-            IM920_ADParse(wk);
-        if (recDataStmc != 0xFF)
-            IM920_RxDataParse(wk);
-            
-        if (recDataStmc == 0xFF) 
-            if (wk == '0')
-                recDataStmc = 0x00;
+            if (bendStmc != 0xFF)
+                IM920_ADParse(wk);
+            if (recDataStmc != 0xFF)
+                IM920_RxDataParse(wk);
+                
+            if (recDataStmc == 0xFF) 
+                if (wk == '0')
+                    recDataStmc = 0x00;
 
     }
 }
@@ -142,9 +143,10 @@ void IM920_ADParse(uint8_t dt)
         //if (dt == ',') {
             bendStmc = 0xFF;
             appData.advalExist = true;
-            Serial.print("Val1 [V]: ");
+// Ver.00.03・・・単位は電圧値ではないので修正
+            Serial.print("Val1 [AD Val]: ");
             Serial.println(appData.adRawVal[0]);
-            Serial.print("Val2 [V]: ");
+            Serial.print("Val2 [AD Val]: ");
             Serial.println(appData.adRawVal[1]);
         }
     }

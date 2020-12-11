@@ -7,6 +7,7 @@
 // Version    | Date       | Auther | Details
 //--------------------------------------------------------------------
 // Ver. 00.01 | 2020/11/24 | Oshiba | test version
+// Ver. 00.03 | 2020/12/11 | Oshiba | テストモード用パラメータ追加
 //--------------------------------------------------------------------
 //
 // (c)Team Shinkai Lab
@@ -72,6 +73,9 @@ void PRM_print(void)
   Serial.println(PRM_Rd_Middle());
   Serial.print("Rng Finger Threshold[AD val] : ");
   Serial.println(PRM_Rd_Ring());
+// Ver. 00.03・・・パラメータ追加
+  Serial.print("Average Num : ");
+  Serial.println(PRM_Rd_AvgNum());
   if (PRM_Rd_Disp())
     Serial.println("ENDSP");
   else
@@ -89,6 +93,7 @@ void PRM_Reset(void)
   PRM_Wr_Middle(def_INIT_MDL);
   PRM_Wr_Ring(def_INIT_RNG);
   PRM_Wr_Disp(1);
+  PRM_Wr_AvgNum(100);
   PRM_SetSaveFlg(true);
   PRM_Save();
 }
@@ -192,6 +197,25 @@ void PRM_Wr_Disp(uint8_t disp)
   flash_write((uint8_t*)&prm, EEPROM_SIZE);
 }
 
+// ↓↓Ver. 00.03・・・追加↓↓
+/* @brief 平均回数を読み込む
+ * @return avg 平均回数
+*/
+uint16_t PRM_Rd_AvgNum(void)
+{
+  return prm.avgNum;
+}
+
+/* @brief 平均回数を書き込む
+ * @param avg 平均回数
+*/
+void PRM_Wr_AvgNum(uint16_t avg)
+{
+  prm.avgNum  = avg;
+  flash_write((uint8_t*)&prm, EEPROM_SIZE);
+}
+// ↑↑Ver. 00.03・・・追加↑↑
+
 /* @brief 全パラメータの読込
  * @memo 基本的には書き換えない
 */
@@ -252,26 +276,29 @@ static void flash_write(uint8_t *data, uint32_t len)
   if (saveFlg) {              //保存可状態なら
     HAL_FLASH_Unlock();         //フラッシュをアンロック
     if (!blckNum) {               //0に書き込むときのみ
+#if DBG_BLCK_PIRNT == 1
       Serial.println("Deleate");
       Serial.flush();
-      flash_erase();              //セクタを消去
+#endif
+      flash_erase();                //全消去する
     }
-    do {                        //1Byteずつフラッシュに書き込む         
+    do {                             
 #if defined(ARDUINO_NUCLEO_F401RE) || defined(ARDUINO_NUCLEO_F411RE)       
+      //1Byteずつフラッシュに書き込む    
       HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, address, *data);
     } while (++address, ++data, --len);
 #elif defined(ARDUINO_NUCLEO_L476RG)
-      //8Byteまとめて保存する
+      //8Byteまとめてフラッシュに書き込む 
       //ただし、逆順に保存する
       wk = 0;               
       data += 7;
-      for (i=0; i<8; i++) {
+      for (i=0; i<8; i++) {   //逆順にwkへ入れる
         wk <<= 8;
         wk |= *data;
         data--;
         address++;
       }
-      len -= 7;
+      len -= 7;               //whileでdo whileで-8にしたいので。
       data += 9;
       HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, address-8, wk);
     } while (--len);

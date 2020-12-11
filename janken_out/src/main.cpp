@@ -4,7 +4,8 @@
 // Version    | Date       | Auther | Details
 //--------------------------------------------------------------------
 // Ver. 00.01 | 2020/11/24 | Oshiba | test version (L476RG)
-// Ver. 00.02 | 2020/12/04 | Oshiba | F401RE board is now supported.
+// Ver. 00.02 | 2020/12/04 | Oshiba | F401REボードへ対応(L476RGは非対応)
+// Ver. 00.03 | 2020/12/11 | Oshiba | テストモード追加
 //--------------------------------------------------------------------
 //
 // (c)Team Shinkai Lab
@@ -38,6 +39,9 @@ void setup()
 uint8_t wk;
 void loop() 
 {
+//***********************************************
+// 通常モード
+//***********************************************
   if (appData.op_mode == 0) {
     if (!appData.imRxEmpty)               //受信データ解析+画面表示
       IM920_RxParse(appData.im920RxDisp);
@@ -60,6 +64,25 @@ void loop()
       //  Serial.println("Stop Now");
     }
 
+// Ver. 00.03・・・テストモード追加
+//***********************************************
+// 指定回数受信を待って平均,最小値,最大値出すモード
+// 出力後はappData.op_mode=0に戻る
+//***********************************************
+  } else if (appData.op_mode == 2) {
+    if (!appData.imRxEmpty)               //受信データ解析+画面表示
+      IM920_RxParse(appData.startAvgMode);
+    
+    if (appData.startAvgMode) {           //エンターでスタート
+      if (appData.advalExist) {
+        appData.advalExist = false;
+        JKN_MeasurementAdval();             //ここで計測
+      }
+    } else {                              //エンターあるまではここで待つ
+      appData.advalExist = false;           //これいらんかも
+      if (!appData.usbRxEmpty)              
+        USBRX_dataParse();                    //\r\n待ち
+    }
 
 //***********************************************
 // IM920s設定モード(無線モジュールと直接通信する)
