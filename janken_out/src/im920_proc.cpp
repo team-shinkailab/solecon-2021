@@ -143,11 +143,13 @@ void IM920_ADParse(uint8_t dt)
         //if (dt == ',') {
             bendStmc = 0xFF;
             appData.advalExist = true;
+            if (appData.op_mode == 0) {
 // Ver.00.03・・・単位は電圧値ではないので修正
-            Serial.print("Val1 [AD Val]: ");
-            Serial.println(appData.adRawVal[0]);
-            Serial.print("Val2 [AD Val]: ");
-            Serial.println(appData.adRawVal[1]);
+                Serial.print("Val1 [AD Val]: ");
+                Serial.println(appData.adRawVal[0]);
+                Serial.print("Val2 [AD Val]: ");
+                Serial.println(appData.adRawVal[1]);
+            }
         }
     }
 }

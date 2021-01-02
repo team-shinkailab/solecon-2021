@@ -10,7 +10,7 @@ typedef struct {
     uint16_t th_rng;        //薬指の曲げ閾値 2B
     uint8_t disp;
     uint16_t avgNum;        //平均値
-    uint8_t EMPTY[243];     //空き(256-13)B
+    uint8_t EMPTY[242];     //空き(256-13)B
 } PARAM;
 
 #define def_FLASH_USED        0xBF25A249    //FLASH使用済みの値 

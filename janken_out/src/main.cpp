@@ -71,7 +71,7 @@ void loop()
 //***********************************************
   } else if (appData.op_mode == 2) {
     if (!appData.imRxEmpty)               //受信データ解析+画面表示
-      IM920_RxParse(appData.startAvgMode);
+      IM920_RxParse(0);
     
     if (appData.startAvgMode) {           //エンターでスタート
       if (appData.advalExist) {

@@ -88,12 +88,13 @@ void JKN_MeasurementAdval(void)
         Serial.println();
         Serial.println("--- Minimum --- ");
         Serial.print("Val1 [AD Val]: ");
-        Serial.println(appData.adMaxVal[0]);
+        Serial.println(appData.adMinVal[0]);
         Serial.print("Val2 [AD Val]: ");
-        Serial.println(appData.adMaxVal[1]);
+        Serial.println(appData.adMinVal[1]);
         Serial.println();
         Serial.println("Exit the average measurement mode.");
         delay(5000);
         appData.op_mode = 0;
+        NVIC_SystemReset();
     }
 }
