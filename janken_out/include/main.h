@@ -16,6 +16,15 @@
 #define def_USB_BPS     115200  //[bps]
 #define def_IM920_BPS   19200   //[bps]
 #define def_IMRX_INTVL  1000    //[Hz]
+#define WIN_LED_PIN     PA13    // 勝ちLED
+#define LOSE_LED_PIN    PA15    // 負けLED
+#define USER_BUTTON_PIN PC13    // B1 USER
+#define START_BUTTON_PIN    PC3     // スタートボタン
+#define THUMB_FINGER_PIN    PB13    // 親指
+#define INDEX_FINGER_PIN    PB2     // 人差し指
+#define MIDDLE_FINGER_PIN   PB1     // 中指
+#define RING_FINGER_PIN     PB15    // 薬指
+#define LITTLE_FINGER_PIN   PB14    // 小指
 
 //software
 #define def_RNG_USBRX   0x0200  //[Byte]
@@ -26,9 +35,19 @@
 #define def_POS_MDL     0
 #define def_POS_RNG     1
 
-typedef enum {
-    POSE_NONE, POSE_RCK, POSE_SSR, POSE_PPR, JUDGE_STOP
-} JANKEN_POSE;
+enum JANKEN_POSE {
+    POSE_RCK,       // グー
+    POSE_SSR,       // チョキ
+    POSE_PPR,       // パー
+    POSE_INVALID,   // 不正値
+    POSE_NONE,      // なし
+};
+
+enum JANKEN_JUDGE {
+    JUDGE_WIN,
+    JUDGE_LOSE,
+    JUDGE_DRAW,
+};
 
 typedef struct {
     //IM920用

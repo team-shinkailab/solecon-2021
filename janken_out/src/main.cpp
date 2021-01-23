@@ -16,15 +16,40 @@
 #include "im920_proc.h"
 #include "usbrx_proc.h"
 #include "janken_proc.h"
+#include "SoleHand.h"
+#include <random>
+#include <array>
+
+#define DIGITAL_FLIP(PIN) digitalWrite((PIN), !digitalRead((PIN)))
 
 APP_DATA appData;
 SoftwareSerial im920(IM920_TXPIN, IM920_RXPIN);
 
+SoleHand soleHand(THUMB_FINGER_PIN, INDEX_FINGER_PIN, MIDDLE_FINGER_PIN, RING_FINGER_PIN, LITTLE_FINGER_PIN);
+
+std::random_device seed_gen;
+std::mt19937 engine(seed_gen());
+std::uniform_int_distribution<int> uniform(0, JANKEN_POSE::POSE_INVALID);
+
+JANKEN_JUDGE playJanken();
+
 void SW_Init()
 {
   appData.advalExist = false;
-  appData.op_mode = 0;                  //本番では削除可能
+  appData.op_mode = 3;                  //本番では削除可能
   appData.im920RxDisp = PRM_Rd_Disp();
+}
+
+void GPIO_INIT()
+{
+  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(WIN_LED_PIN, OUTPUT);
+  pinMode(LOSE_LED_PIN, OUTPUT);
+  pinMode(THUMB_FINGER_PIN, OUTPUT);
+  pinMode(INDEX_FINGER_PIN, OUTPUT);
+  pinMode(MIDDLE_FINGER_PIN, OUTPUT);
+  pinMode(RING_FINGER_PIN, OUTPUT);
+  pinMode(LITTLE_FINGER_PIN, OUTPUT);
 }
 
 void setup() 
@@ -34,6 +59,7 @@ void setup()
   USBRX_Init();
   PRM_Init();
   SW_Init();
+  GPIO_INIT();
 }
 
 uint8_t wk;
@@ -58,7 +84,7 @@ void loop()
         Serial.println("Choki");
       else if (wk == POSE_PPR)
         Serial.println("Pa-");
-      else if (wk == POSE_NONE)
+      else if (wk == POSE_INVALID)
         Serial.println("Yamero");
       //else if (wk == JUDGE_STOP)
       //  Serial.println("Stop Now");
@@ -96,5 +122,151 @@ void loop()
     }
     if (!appData.imRxEmpty)               //受信データ画面表示
       Serial.printf("%c", IM920_ReadByte());
+
+//***********************************************
+// 本番モード
+//***********************************************
+  } else if (appData.op_mode == 3) {
+    if (!appData.usbRxEmpty)              //パラメータ等書き換え用
+      USBRX_dataParse();
+    
+    // スタートボタン待ち
+    if(digitalRead(START_BUTTON_PIN) == LOW) {
+        // じゃんけん開始
+        while(playJanken() == JANKEN_JUDGE::JUDGE_DRAW) {
+            // あいこ
+            delay(1000);
+        }
+    }
+    DIGITAL_FLIP(LED_BUILTIN);
+    delay(100);
   }
+}
+
+/**
+* @brief 初期化
+*/
+void initializeHand() {
+    soleHand.initialize();
+    digitalWrite(WIN_LED_PIN, LOW);
+    digitalWrite(LOSE_LED_PIN, LOW);
+}
+
+/**
+* @brief 判定
+* @return Judge aから見た勝敗
+*/
+JANKEN_JUDGE judge(JANKEN_POSE a, JANKEN_POSE b) {    
+    switch(a) {
+    case JANKEN_POSE::POSE_RCK:
+        return
+            b == JANKEN_POSE::POSE_SSR ? JANKEN_JUDGE::JUDGE_WIN :
+            b == JANKEN_POSE::POSE_PPR ? JANKEN_JUDGE::JUDGE_LOSE : JANKEN_JUDGE::JUDGE_DRAW;
+    case JANKEN_POSE::POSE_SSR:
+        return
+            b == JANKEN_POSE::POSE_PPR ? JANKEN_JUDGE::JUDGE_WIN :
+            b == JANKEN_POSE::POSE_RCK ? JANKEN_JUDGE::JUDGE_LOSE : JANKEN_JUDGE::JUDGE_DRAW;
+    case JANKEN_POSE::POSE_PPR:
+        return
+            b == JANKEN_POSE::POSE_RCK ? JANKEN_JUDGE::JUDGE_WIN :
+            b == JANKEN_POSE::POSE_SSR ? JANKEN_JUDGE::JUDGE_LOSE : JANKEN_JUDGE::JUDGE_DRAW;
+    default:
+        return JANKEN_JUDGE::JUDGE_DRAW;
+    }
+}
+
+/**
+ * @brief プレイヤーの手待ち受け
+ */
+JANKEN_POSE waitHand() {
+  while(true) {
+    if (!appData.imRxEmpty)               //受信データ解析+画面表示
+      IM920_RxParse(appData.im920RxDisp);
+    
+    if(appData.advalExist) {
+      appData.advalExist = false;
+
+      JANKEN_POSE pose =  JKN_PoseIdentify();
+      if(pose != JANKEN_POSE::POSE_NONE){
+        return pose;
+      }
+    }
+    
+    delay(10);
+  }
+
+  return JANKEN_POSE::POSE_NONE;
+}
+
+/**
+* @brief じゃんけん実行
+* @return Judge プレイヤーから見た勝敗
+*/
+JANKEN_JUDGE playJanken() {
+    Serial.println("play janken");
+    
+    initializeHand();
+    
+    // プレイヤーのグー待ち
+    while(waitHand() != JANKEN_POSE::POSE_RCK){
+      ;
+    }
+
+    Serial.println("Gu detected");
+    
+    // じゃん
+    digitalWrite(WIN_LED_PIN, HIGH);
+    digitalWrite(LOSE_LED_PIN, HIGH);
+    delay(500);
+    digitalWrite(WIN_LED_PIN, LOW);
+    digitalWrite(LOSE_LED_PIN, LOW);
+    delay(500);
+    
+    // けん
+    digitalWrite(WIN_LED_PIN, HIGH);
+    digitalWrite(LOSE_LED_PIN, HIGH);
+    delay(500);
+    digitalWrite(WIN_LED_PIN, LOW);
+    digitalWrite(LOSE_LED_PIN, LOW);
+    delay(500);
+    
+    // ぽん
+    digitalWrite(WIN_LED_PIN, HIGH);
+    digitalWrite(LOSE_LED_PIN, HIGH);
+    // CPUの手決定
+    JANKEN_POSE cpuPose = static_cast<JANKEN_POSE>(uniform(engine));
+    soleHand.setPose(cpuPose);
+    // プレイヤーの手決定
+    JANKEN_POSE playerPose = waitHand();
+    
+    // 結果表示
+    JANKEN_JUDGE result = judge(playerPose, cpuPose);
+    digitalWrite(WIN_LED_PIN, LOW);
+    digitalWrite(LOSE_LED_PIN, LOW);
+    switch(result) {
+    case JANKEN_JUDGE::JUDGE_WIN:
+        Serial.println("player win");
+        for(int i = 0; i < 100; i++){
+            DIGITAL_FLIP(WIN_LED_PIN);
+            delay(10);
+        }
+        break;
+    case JANKEN_JUDGE::JUDGE_LOSE:
+        Serial.println("player lose");
+        for(int i = 0; i < 100; i++){
+            DIGITAL_FLIP(LOSE_LED_PIN);
+            delay(10);
+        }
+        break;
+    case JANKEN_JUDGE::JUDGE_DRAW:
+        Serial.println("draw");
+        for(int i = 0; i < 100; i++){
+            DIGITAL_FLIP(WIN_LED_PIN);
+            DIGITAL_FLIP(LOSE_LED_PIN);
+            delay(10);
+        }
+        break;
+    }
+    
+    return result;
 }

@@ -32,7 +32,7 @@ void JKN_DisableIdentify(void)
 /* @brief じゃんけんの形を識別する
  * @return JANKEN_POSE じゃんけんの形
  */
-uint8_t JKN_PoseIdentify(void)
+JANKEN_POSE JKN_PoseIdentify(void)
 {
     bool extend_rng=true, extend_mdl=true;
 
@@ -50,10 +50,10 @@ uint8_t JKN_PoseIdentify(void)
         else if (extend_mdl && extend_rng)
             return POSE_PPR;
         else
-            return POSE_NONE;
+            return POSE_INVALID;
     }
 
-    return JUDGE_STOP;
+    return POSE_NONE;
 }
 
 // Ver. 00.03・・・追加
