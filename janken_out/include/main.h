@@ -49,6 +49,14 @@ enum JANKEN_JUDGE {
     JUDGE_DRAW,
 };
 
+enum MODE {
+    MODE_NORMAL,
+    MODE_SETIM,
+    MODE_AVG,
+    MODE_PRODUCTION,
+    MODE_END,
+};
+
 typedef struct {
     //IM920用
     uint8_t imRxBuf[def_RNG_IMRX];
@@ -70,9 +78,11 @@ typedef struct {
     //その他
     bool advalExist;
     uint16_t adRawVal[2];
-    uint8_t op_mode;
+    MODE op_mode;
     uint8_t im920RxDisp;
 } APP_DATA;
 
 extern APP_DATA appData;
 extern SoftwareSerial im920;
+
+void CHANGE_MODE(MODE mode);

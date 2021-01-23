@@ -94,7 +94,7 @@ void JKN_MeasurementAdval(void)
         Serial.println();
         Serial.println("Exit the average measurement mode.");
         delay(5000);
-        appData.op_mode = 0;
+        appData.op_mode = MODE::MODE_NORMAL;
         NVIC_SystemReset();
     }
 }

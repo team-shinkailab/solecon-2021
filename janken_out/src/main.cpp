@@ -36,7 +36,7 @@ JANKEN_JUDGE playJanken();
 void SW_Init()
 {
   appData.advalExist = false;
-  appData.op_mode = 3;                  //本番では削除可能
+  appData.op_mode = MODE::MODE_PRODUCTION;
   appData.im920RxDisp = PRM_Rd_Disp();
 }
 
@@ -62,32 +62,32 @@ void setup()
   GPIO_INIT();
 }
 
+const char* poseToString(JANKEN_POSE pose){
+  return
+    pose == JANKEN_POSE::POSE_RCK ? "Gu-" :
+    pose == JANKEN_POSE::POSE_SSR ? "Choki" :
+    pose == JANKEN_POSE::POSE_PPR ? "Pa-" : "Invalid";
+}
+
 uint8_t wk;
 void loop() 
 {
+  if (!appData.usbRxEmpty)              //パラメータ等書き換え用
+    USBRX_dataParse();
+
 //***********************************************
 // 通常モード
 //***********************************************
-  if (appData.op_mode == 0) {
+  if (appData.op_mode == MODE::MODE_NORMAL) {
     if (!appData.imRxEmpty)               //受信データ解析+画面表示
       IM920_RxParse(appData.im920RxDisp);
-    
-    if (!appData.usbRxEmpty)              //パラメータ等書き換え用
-      USBRX_dataParse();
-    
+        
     if (appData.advalExist) {
       appData.advalExist = false;
       wk = JKN_PoseIdentify();               
-      if (wk == POSE_RCK)
-        Serial.println("Gu-");
-      else if (wk == POSE_SSR)
-        Serial.println("Choki");
-      else if (wk == POSE_PPR)
-        Serial.println("Pa-");
-      else if (wk == POSE_INVALID)
-        Serial.println("Yamero");
-      //else if (wk == JUDGE_STOP)
-      //  Serial.println("Stop Now");
+      if (wk != POSE_NONE){
+        Serial.println(poseToString(static_cast<JANKEN_POSE>(wk)));
+      }
     }
 
 // Ver. 00.03・・・テストモード追加
@@ -95,7 +95,7 @@ void loop()
 // 指定回数受信を待って平均,最小値,最大値出すモード
 // 出力後はappData.op_mode=0に戻る
 //***********************************************
-  } else if (appData.op_mode == 2) {
+  } else if (appData.op_mode == MODE::MODE_AVG) {
     if (!appData.imRxEmpty)               //受信データ解析+画面表示
       IM920_RxParse(0);
     
@@ -114,7 +114,7 @@ void loop()
 // IM920s設定モード(無線モジュールと直接通信する)
 // 解除はPORのみ, 本番用では削除可能
 //***********************************************
-  } else if (appData.op_mode == 1) {
+  } else if (appData.op_mode == MODE::MODE_SETIM) {
     if (!appData.usbRxEmpty) {
       wk = USB_RX_pop();
       im920.printf("%c", wk);
@@ -126,7 +126,9 @@ void loop()
 //***********************************************
 // 本番モード
 //***********************************************
-  } else if (appData.op_mode == 3) {
+  } else if (appData.op_mode == MODE::MODE_PRODUCTION) {
+    JKN_EnableIdentify();
+
     if (!appData.usbRxEmpty)              //パラメータ等書き換え用
       USBRX_dataParse();
     
@@ -241,32 +243,64 @@ JANKEN_JUDGE playJanken() {
     
     // 結果表示
     JANKEN_JUDGE result = judge(playerPose, cpuPose);
+
+    Serial.printf("player: %s, cpu: %s\n", poseToString(playerPose), poseToString(cpuPose));
     digitalWrite(WIN_LED_PIN, LOW);
     digitalWrite(LOSE_LED_PIN, LOW);
     switch(result) {
     case JANKEN_JUDGE::JUDGE_WIN:
         Serial.println("player win");
-        for(int i = 0; i < 100; i++){
+        for(int i = 0; i < 20; i++){
             DIGITAL_FLIP(WIN_LED_PIN);
-            delay(10);
+            delay(100);
         }
         break;
     case JANKEN_JUDGE::JUDGE_LOSE:
         Serial.println("player lose");
-        for(int i = 0; i < 100; i++){
+        for(int i = 0; i < 20; i++){
             DIGITAL_FLIP(LOSE_LED_PIN);
-            delay(10);
+            delay(100);
         }
         break;
     case JANKEN_JUDGE::JUDGE_DRAW:
         Serial.println("draw");
-        for(int i = 0; i < 100; i++){
+        for(int i = 0; i < 20; i++){
             DIGITAL_FLIP(WIN_LED_PIN);
             DIGITAL_FLIP(LOSE_LED_PIN);
-            delay(10);
+            delay(100);
         }
         break;
     }
     
     return result;
+}
+
+/**
+ * @brief モード変更
+ */
+void CHANGE_MODE(MODE mode) {
+  appData.op_mode = mode;
+
+  switch(mode) {
+  case MODE::MODE_NORMAL:
+    Serial.println("Normal Mode");
+    break;
+  case MODE::MODE_AVG:
+    appData.startAvgMode = 0;
+    appData.avgRecNum = 0;        
+    appData.adSumVal[0] = 0;      appData.adSumVal[1] = 0;
+    appData.adMaxVal[0] = 0;      appData.adMaxVal[1] = 0;
+    appData.adMinVal[0] = 0xFFFF; appData.adMinVal[1] = 0xFFFF;
+    Serial.println("Measuring Average Mode");
+    Serial.print("press the enter key.");
+    break;
+  case MODE::MODE_SETIM:
+    Serial.println("IM920 IO Mode");
+    break;
+  case MODE::MODE_PRODUCTION:
+    Serial.println("Production Mode");
+    break;
+  default:
+    break;
+  }
 }

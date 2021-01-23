@@ -27,6 +27,7 @@ static uint8_t USBRX_DSDSP(void);
 static uint8_t USBRX_ENJKN(void);
 static uint8_t USBRX_WRAVG(void);
 static uint8_t USBRX_GOAVG(void);
+static uint8_t USBRX_CHGMD(void);
 
 //内部変数
 /* @brief コマンド用辞書
@@ -36,7 +37,7 @@ static const CMD_DICTIONARY cmdDict[CMDNUM]{
   {(char*)"RDALL", USBRX_RDALL},  {(char*)"SWRST", USBRX_SWRST},  {(char*)"PMCLR", USBRX_PMCLR},
   {(char*)"SETIM", USBRX_SETIM},  {(char*)"WRMDL", USBRX_WRMDL},  {(char*)"WRRNG", USBRX_WRRNG},
   {(char*)"ENDSP", USBRX_ENDSP},  {(char*)"DSDSP", USBRX_DSDSP},  {(char*)"ENJKN", USBRX_ENJKN},
-  {(char*)"WRAVG", USBRX_WRAVG},  {(char*)"GOAVG", USBRX_GOAVG}
+  {(char*)"WRAVG", USBRX_WRAVG},  {(char*)"GOAVG", USBRX_GOAVG},  {(char*)"CHGMD", USBRX_CHGMD},
 };
 static char cmd[20];
 static uint8_t cmdLen;
@@ -83,7 +84,7 @@ void USBRX_dataParse(void)
     wk = USB_RX_pop();              //データを1Byte取り出す
     Serial.print(wk);
 //Ver. 00.03・・・テスト時と通常時で使い分ける
-    if (appData.op_mode != 2) {     //通常時
+    if (appData.op_mode != MODE::MODE_AVG) {     //通常時
       wk = toupper(wk);               //小文字を大文字に
       if ('A'<=wk&&wk<='Z') {         //5文字目までは英語を待つ
         if (cmdLen < CMDLEN)
@@ -127,7 +128,7 @@ void USBRX_dataParse(void)
         }
       }
 
-    } else if (appData.op_mode == 2) {    //平均回数
+    } else if (appData.op_mode == MODE::MODE_AVG) {    //平均回数
       if (avgEnterStmc == 0x00) {
           if (wk =='\r')  avgEnterStmc = 0x01;
       } else if (avgEnterStmc == 0x01) {
@@ -143,8 +144,7 @@ void USBRX_dataParse(void)
  */
 static uint8_t USBRX_SETIM(void)
 {
-  Serial.println("IM920 IO Mode");
-  appData.op_mode = 1;
+  CHANGE_MODE(MODE::MODE_SETIM);
   return RESP_OK;
 }
 
@@ -290,13 +290,32 @@ static uint8_t USBRX_WRAVG(void)
  */
 static uint8_t USBRX_GOAVG(void)
 {
-  appData.op_mode = 2;          appData.startAvgMode = 0;
-  appData.avgRecNum = 0;        
-  appData.adSumVal[0] = 0;      appData.adSumVal[1] = 0;
-  appData.adMaxVal[0] = 0;      appData.adMaxVal[1] = 0;
-  appData.adMinVal[0] = 0xFFFF; appData.adMinVal[1] = 0xFFFF;
-  Serial.println("Measuring Average Mode");
-  Serial.print("press the enter key.");
+  CHANGE_MODE(MODE::MODE_AVG);
   return RESP_NO;
 }
 // ↑↑Ver. 00.03・・・追加↑↑
+
+/* @brief モード変更
+ */
+static uint8_t USBRX_CHGMD(void)
+{
+  char buf[6];
+  uint8_t wk, i, j=0;
+  int newval;
+  for (i=CMDLEN; i<CMDMAXLEN; i++) {
+    wk = cmd[i];
+    if ('\r' == wk)
+      break;
+    else
+      buf[j++] = wk;
+  }
+  newval = (uint16_t) atoi(buf);
+  if (newval <= MODE::MODE_END) {
+    Serial.println("CHANGE MODE");
+    Serial.flush();
+    CHANGE_MODE(static_cast<MODE>(newval));
+    return RESP_OK;
+  } else {
+    return RESP_ERROR;
+  }
+}
