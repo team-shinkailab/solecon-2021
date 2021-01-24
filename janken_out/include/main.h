@@ -20,11 +20,11 @@
 #define LOSE_LED_PIN    PA15    // 負けLED
 #define USER_BUTTON_PIN PC13    // B1 USER
 #define START_BUTTON_PIN    PC3     // スタートボタン
-#define THUMB_FINGER_PIN    PB13    // 親指
-#define INDEX_FINGER_PIN    PB2     // 人差し指
-#define MIDDLE_FINGER_PIN   PB1     // 中指
-#define RING_FINGER_PIN     PB15    // 薬指
-#define LITTLE_FINGER_PIN   PB14    // 小指
+#define THUMB_FINGER_PIN    PB14    // 親指
+#define INDEX_FINGER_PIN    PB15    // 人差し指
+#define MIDDLE_FINGER_PIN   PB15    // 中指
+#define RING_FINGER_PIN     PB1     // 薬指
+#define LITTLE_FINGER_PIN   PB1     // 小指
 
 //software
 #define def_RNG_USBRX   0x0200  //[Byte]
@@ -36,9 +36,12 @@
 #define def_POS_RNG     1
 
 enum JANKEN_POSE {
-    POSE_RCK,       // グー
-    POSE_SSR,       // チョキ
-    POSE_PPR,       // パー
+    POSE_VALID_BEGIN,
+    POSE_RCK = POSE_VALID_BEGIN,    // グー
+    POSE_SSR,                       // チョキ
+    POSE_PPR,                       // パー
+    POSE_VALID_END = POSE_PPR,
+
     POSE_INVALID,   // 不正値
     POSE_NONE,      // なし
 };

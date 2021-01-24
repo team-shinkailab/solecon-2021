@@ -29,9 +29,9 @@ SoleHand soleHand(THUMB_FINGER_PIN, INDEX_FINGER_PIN, MIDDLE_FINGER_PIN, RING_FI
 
 std::random_device seed_gen;
 std::mt19937 engine(seed_gen());
-std::uniform_int_distribution<int> uniform(0, JANKEN_POSE::POSE_INVALID);
+std::uniform_int_distribution<int> uniform(JANKEN_POSE::POSE_VALID_BEGIN, JANKEN_POSE::POSE_VALID_END);
 
-JANKEN_JUDGE playJanken();
+JANKEN_JUDGE playJanken(bool draw);
 
 void SW_Init()
 {
@@ -106,8 +106,6 @@ void loop()
       }
     } else {                              //エンターあるまではここで待つ
       appData.advalExist = false;           //これいらんかも
-      if (!appData.usbRxEmpty)              
-        USBRX_dataParse();                    //\r\n待ち
     }
 
 //***********************************************
@@ -128,30 +126,20 @@ void loop()
 //***********************************************
   } else if (appData.op_mode == MODE::MODE_PRODUCTION) {
     JKN_EnableIdentify();
-
-    if (!appData.usbRxEmpty)              //パラメータ等書き換え用
-      USBRX_dataParse();
     
     // スタートボタン待ち
     if(digitalRead(START_BUTTON_PIN) == LOW) {
         // じゃんけん開始
-        while(playJanken() == JANKEN_JUDGE::JUDGE_DRAW) {
-            // あいこ
-            delay(1000);
+        Serial.println("play janken");
+    
+        bool draw = false;
+        while(playJanken(draw) == JANKEN_JUDGE::JUDGE_DRAW) {
+          ; // あいこ
         }
     }
     DIGITAL_FLIP(LED_BUILTIN);
     delay(100);
   }
-}
-
-/**
-* @brief 初期化
-*/
-void initializeHand() {
-    soleHand.initialize();
-    digitalWrite(WIN_LED_PIN, LOW);
-    digitalWrite(LOSE_LED_PIN, LOW);
 }
 
 /**
@@ -189,7 +177,8 @@ JANKEN_POSE waitHand() {
       appData.advalExist = false;
 
       JANKEN_POSE pose =  JKN_PoseIdentify();
-      if(pose != JANKEN_POSE::POSE_NONE){
+      if(pose != JANKEN_POSE::POSE_NONE && 
+         pose != JANKEN_POSE::POSE_INVALID){
         return pose;
       }
     }
@@ -204,17 +193,24 @@ JANKEN_POSE waitHand() {
 * @brief じゃんけん実行
 * @return Judge プレイヤーから見た勝敗
 */
-JANKEN_JUDGE playJanken() {
-    Serial.println("play janken");
-    
-    initializeHand();
+JANKEN_JUDGE playJanken(bool draw) {
+    // 初期化
+    soleHand.initialize();
+    digitalWrite(WIN_LED_PIN, LOW);
+    digitalWrite(LOSE_LED_PIN, LOW);
+
+    delay(1000);
     
     // プレイヤーのグー待ち
-    while(waitHand() != JANKEN_POSE::POSE_RCK){
-      ;
+    if(draw) {
+      Serial.println("aiko");
     }
-
-    Serial.println("Gu detected");
+    else {
+      while(waitHand() != JANKEN_POSE::POSE_RCK){
+        ;
+      }
+      Serial.println("Gu detected");
+    }
     
     // じゃん
     digitalWrite(WIN_LED_PIN, HIGH);
@@ -222,6 +218,7 @@ JANKEN_JUDGE playJanken() {
     delay(500);
     digitalWrite(WIN_LED_PIN, LOW);
     digitalWrite(LOSE_LED_PIN, LOW);
+
     delay(500);
     
     // けん
@@ -230,47 +227,55 @@ JANKEN_JUDGE playJanken() {
     delay(500);
     digitalWrite(WIN_LED_PIN, LOW);
     digitalWrite(LOSE_LED_PIN, LOW);
-    delay(500);
     
     // ぽん
-    digitalWrite(WIN_LED_PIN, HIGH);
-    digitalWrite(LOSE_LED_PIN, HIGH);
     // CPUの手決定
     JANKEN_POSE cpuPose = static_cast<JANKEN_POSE>(uniform(engine));
     soleHand.setPose(cpuPose);
+    delay(500);
+    digitalWrite(WIN_LED_PIN, HIGH);
+    digitalWrite(LOSE_LED_PIN, HIGH);
+    delay(500);
+    digitalWrite(WIN_LED_PIN, LOW);
+    digitalWrite(LOSE_LED_PIN, LOW);
     // プレイヤーの手決定
     JANKEN_POSE playerPose = waitHand();
+
+    delay(500);
     
     // 結果表示
     JANKEN_JUDGE result = judge(playerPose, cpuPose);
 
     Serial.printf("player: %s, cpu: %s\n", poseToString(playerPose), poseToString(cpuPose));
-    digitalWrite(WIN_LED_PIN, LOW);
-    digitalWrite(LOSE_LED_PIN, LOW);
     switch(result) {
     case JANKEN_JUDGE::JUDGE_WIN:
         Serial.println("player win");
-        for(int i = 0; i < 20; i++){
+        for(int i = 0; i < 10; i++){
             DIGITAL_FLIP(WIN_LED_PIN);
-            delay(100);
+            delay(200);
         }
         break;
     case JANKEN_JUDGE::JUDGE_LOSE:
         Serial.println("player lose");
-        for(int i = 0; i < 20; i++){
+        for(int i = 0; i < 10; i++){
             DIGITAL_FLIP(LOSE_LED_PIN);
-            delay(100);
+            delay(200);
         }
         break;
     case JANKEN_JUDGE::JUDGE_DRAW:
         Serial.println("draw");
-        for(int i = 0; i < 20; i++){
+        for(int i = 0; i < 10; i++){
             DIGITAL_FLIP(WIN_LED_PIN);
             DIGITAL_FLIP(LOSE_LED_PIN);
-            delay(100);
+            delay(200);
         }
         break;
     }
+    
+    // リセット
+    soleHand.initialize();
+    digitalWrite(WIN_LED_PIN, LOW);
+    digitalWrite(LOSE_LED_PIN, LOW);
     
     return result;
 }

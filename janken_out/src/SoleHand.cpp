@@ -24,8 +24,8 @@ void SoleHand::setPose(JANKEN_POSE pose) {
 }
 
 const std::array<std::array<uint32_t, SoleHand::Finger::End>, JANKEN_POSE::POSE_NONE> SoleHand::Poses = { {
-    { 1, 1, 1, 1, 1 },
-    { 0, 1, 1, 0, 0 },
     { 0, 0, 0, 0, 0 },
-    { 0, 0, 1, 0, 0 },
+    { 0, 1, 1, 0, 0 },
+    { 1, 1, 1, 1, 1 },
+    { 0, 0, 0, 0, 0 },
 } };
