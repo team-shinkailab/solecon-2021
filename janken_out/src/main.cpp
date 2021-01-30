@@ -134,7 +134,7 @@ void loop()
     
         bool draw = false;
         while(playJanken(draw) == JANKEN_JUDGE::JUDGE_DRAW) {
-          ; // あいこ
+          draw = true; // あいこ
         }
     }
     DIGITAL_FLIP(LED_BUILTIN);
@@ -227,41 +227,60 @@ JANKEN_JUDGE playJanken(bool draw) {
 
     delay(1000);
     
-    // プレイヤーのグー待ち
     if(draw) {
+      // あいこ
       Serial.println("aiko");
     }
     else {
+      // プレイヤーのグー待ち
       while(waitHand() != JANKEN_POSE::POSE_RCK){
         ;
       }
       Serial.println("Gu detected");
+      
+      delay(1000);
+      
+      // さい
+      digitalWrite(WIN_LED_PIN, HIGH);
+      delay(300);
+      digitalWrite(WIN_LED_PIN, LOW);
+      delay(300);
+      // しょは
+      digitalWrite(LOSE_LED_PIN, HIGH);
+      delay(300);
+      digitalWrite(LOSE_LED_PIN, LOW);
+      delay(300);
+      // グー
+      digitalWrite(WIN_LED_PIN, HIGH);
+      delay(300);
+      digitalWrite(WIN_LED_PIN, LOW);
+      delay(600);
     }
     
     // じゃん
     digitalWrite(WIN_LED_PIN, HIGH);
     digitalWrite(LOSE_LED_PIN, HIGH);
-    delay(500);
+    delay(300);
     digitalWrite(WIN_LED_PIN, LOW);
     digitalWrite(LOSE_LED_PIN, LOW);
 
-    delay(500);
+    delay(300);
     
     // けん
     digitalWrite(WIN_LED_PIN, HIGH);
     digitalWrite(LOSE_LED_PIN, HIGH);
-    delay(500);
+    delay(300);
     digitalWrite(WIN_LED_PIN, LOW);
     digitalWrite(LOSE_LED_PIN, LOW);
+    delay(300);
     
     // ぽん
     // CPUの手決定
     JANKEN_POSE cpuPose = static_cast<JANKEN_POSE>(uniform(engine));
     soleHand.setPose(cpuPose);
-    delay(500);
     digitalWrite(WIN_LED_PIN, HIGH);
     digitalWrite(LOSE_LED_PIN, HIGH);
-    delay(500);
+    delay(300);
     digitalWrite(WIN_LED_PIN, LOW);
     digitalWrite(LOSE_LED_PIN, LOW);
     // プレイヤーの手決定
@@ -276,24 +295,24 @@ JANKEN_JUDGE playJanken(bool draw) {
     switch(result) {
     case JANKEN_JUDGE::JUDGE_WIN:
         Serial.println("player win");
-        for(int i = 0; i < 10; i++){
+        for(int i = 0; i < 20; i++){
             DIGITAL_FLIP(WIN_LED_PIN);
-            delay(200);
+            delay(100);
         }
         break;
     case JANKEN_JUDGE::JUDGE_LOSE:
         Serial.println("player lose");
-        for(int i = 0; i < 10; i++){
+        for(int i = 0; i < 20; i++){
             DIGITAL_FLIP(LOSE_LED_PIN);
-            delay(200);
+            delay(100);
         }
         break;
     case JANKEN_JUDGE::JUDGE_DRAW:
         Serial.println("draw");
-        for(int i = 0; i < 10; i++){
+        for(int i = 0; i < 20; i++){
             DIGITAL_FLIP(WIN_LED_PIN);
             DIGITAL_FLIP(LOSE_LED_PIN);
-            delay(200);
+            delay(100);
         }
         break;
     }
