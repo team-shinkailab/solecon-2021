@@ -169,9 +169,15 @@ JANKEN_JUDGE judge(JANKEN_POSE a, JANKEN_POSE b) {
  * @brief プレイヤーの手待ち受け
  */
 JANKEN_POSE waitHand() {
+  // 一回溜ったバッファを捨てる
+  if (!appData.imRxEmpty) {
+    IM920_RxParse(appData.im920RxDisp);
+  }
+  appData.advalExist = false;
+
   while(true) {
-    if (!appData.imRxEmpty)               //受信データ解析+画面表示
-      IM920_RxParse(appData.im920RxDisp);
+    //受信データ解析+画面表示
+    IM920_RxParse(appData.im920RxDisp);
     
     if(appData.advalExist) {
       appData.advalExist = false;
