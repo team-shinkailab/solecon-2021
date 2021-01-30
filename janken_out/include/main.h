@@ -57,6 +57,7 @@ enum MODE {
     MODE_SETIM,
     MODE_AVG,
     MODE_PRODUCTION,
+    MODE_OUTPUTTEST,
     MODE_END,
 };
 

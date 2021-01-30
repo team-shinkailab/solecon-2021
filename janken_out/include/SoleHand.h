@@ -20,7 +20,7 @@ public:
     SoleHand(uint32_t thumb, uint32_t index, uint32_t middle, uint32_t ring, uint32_t little);
 
     /// @brief 初期化
-    void initialize();
+    void resetPose();
         
     /// @brief ポーズ出力
     void setPose(JANKEN_POSE pose);

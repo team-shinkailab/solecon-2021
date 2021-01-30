@@ -139,6 +139,26 @@ void loop()
     }
     DIGITAL_FLIP(LED_BUILTIN);
     delay(100);
+
+//***********************************************
+// 出力テストモード
+//***********************************************
+  } else if (appData.op_mode == MODE::MODE_OUTPUTTEST) {
+    Serial.println("Gu-");
+    soleHand.setPose(JANKEN_POSE::POSE_RCK);
+    delay(1000);
+    soleHand.resetPose();
+    delay(1000);
+    Serial.println("Choki");
+    soleHand.setPose(JANKEN_POSE::POSE_SSR);
+    delay(1000);
+    soleHand.resetPose();
+    delay(1000);
+    Serial.println("Pa-");
+    soleHand.setPose(JANKEN_POSE::POSE_PPR);
+    delay(1000);
+    soleHand.resetPose();
+    delay(1000);
   }
 }
 
@@ -201,7 +221,7 @@ JANKEN_POSE waitHand() {
 */
 JANKEN_JUDGE playJanken(bool draw) {
     // 初期化
-    soleHand.initialize();
+    soleHand.resetPose();
     digitalWrite(WIN_LED_PIN, LOW);
     digitalWrite(LOSE_LED_PIN, LOW);
 
@@ -279,7 +299,7 @@ JANKEN_JUDGE playJanken(bool draw) {
     }
     
     // リセット
-    soleHand.initialize();
+    soleHand.resetPose();
     digitalWrite(WIN_LED_PIN, LOW);
     digitalWrite(LOSE_LED_PIN, LOW);
     
@@ -310,6 +330,9 @@ void CHANGE_MODE(MODE mode) {
     break;
   case MODE::MODE_PRODUCTION:
     Serial.println("Production Mode");
+    break;
+  case MODE::MODE_OUTPUTTEST:
+    Serial.println("Output Test Mode");
     break;
   default:
     break;

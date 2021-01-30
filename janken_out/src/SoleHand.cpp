@@ -6,7 +6,7 @@ SoleHand::SoleHand(uint32_t thumb, uint32_t index, uint32_t middle, uint32_t rin
 }
 
 /// @brief 初期化
-void SoleHand::initialize(){
+void SoleHand::resetPose(){
     for(auto&& sole : _solenoids){
         digitalWrite(sole, 0);
     }
