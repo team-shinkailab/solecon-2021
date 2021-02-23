@@ -1,12 +1,6 @@
 //
 // main.cpp  : ソレコンじゃんけん出力側 無線受信機プログラム
 // reference : シールドについて : https://www.interplan.co.jp/support/solution/IM315/manual/IM315SHLDv2_manual.pdf
-//--------------------------------------------------------------------
-// Version    | Date       | Auther | Details
-//--------------------------------------------------------------------
-// Ver. 00.01 | 2020/11/24 | Oshiba | test version
-// Ver. 00.03 | 2020/12/11 | Oshiba | 微調整
-//--------------------------------------------------------------------
 //
 // (c)Team Shinkai Lab
 
@@ -144,7 +138,6 @@ void IM920_ADParse(uint8_t dt)
             bendStmc = 0xFF;
             appData.advalExist = true;
             if (appData.op_mode == MODE::MODE_NORMAL || appData.op_mode == MODE::MODE_PRODUCTION) {
-// Ver.00.03・・・単位は電圧値ではないので修正
                 Serial.print("Val1 [AD Val]: ");
                 Serial.println(appData.adRawVal[0]);
                 Serial.print("Val2 [AD Val]: ");

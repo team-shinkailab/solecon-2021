@@ -3,12 +3,6 @@
 // reference : https://github.com/stm32duino/Arduino_Core_STM32/tree/master/libraries/EEPROM
 // reference : https://umtkm.github.io/2017/12/19/nucleo-f401-flash-struct/
 // reference : https://www.st.com/resource/ja/reference_manual/dm00096844-stm32f401xbc-and-stm32f401xde-advanced-armbased-32bit-mcus-stmicroelectronics.pdf
-//--------------------------------------------------------------------
-// Version    | Date       | Auther | Details
-//--------------------------------------------------------------------
-// Ver. 00.01 | 2020/11/24 | Oshiba | test version
-// Ver. 00.03 | 2020/12/11 | Oshiba | テストモード用パラメータ追加
-//--------------------------------------------------------------------
 //
 // (c)Team Shinkai Lab
 
@@ -73,7 +67,6 @@ void PRM_print(void)
   Serial.println(PRM_Rd_Middle());
   Serial.print("Rng Finger Threshold[AD val] : ");
   Serial.println(PRM_Rd_Ring());
-// Ver. 00.03・・・パラメータ追加
   Serial.print("Average Num : ");
   Serial.println(PRM_Rd_AvgNum());
   if (PRM_Rd_Disp())
@@ -197,7 +190,6 @@ void PRM_Wr_Disp(uint8_t disp)
   flash_write((uint8_t*)&prm, EEPROM_SIZE);
 }
 
-// ↓↓Ver. 00.03・・・追加↓↓
 /* @brief 平均回数を読み込む
  * @return avg 平均回数
 */
@@ -214,7 +206,6 @@ void PRM_Wr_AvgNum(uint16_t avg)
   prm.avgNum  = avg;
   flash_write((uint8_t*)&prm, EEPROM_SIZE);
 }
-// ↑↑Ver. 00.03・・・追加↑↑
 
 /* @brief 全パラメータの読込
  * @memo 基本的には書き換えない
@@ -240,9 +231,6 @@ void PRM_Load(void)
   }
 }
 
-//***************************************
-// 低レイヤ
-//***************************************
 /* @brief FLASHメモリの削除
 */
 static void flash_erase(void)

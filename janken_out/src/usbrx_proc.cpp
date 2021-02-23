@@ -1,11 +1,5 @@
 //
 // usb_proc.cpp : usbによるIM920パラメータ変更モード処理
-//--------------------------------------------------------------------
-// Version    | Date       | Auther | Details
-//--------------------------------------------------------------------
-// Ver. 00.01 | 2020/11/24 | Oshiba | test version
-// Ver. 00.03 | 2020/12/11 | Oshiba | テストモード用コマンド追加
-//--------------------------------------------------------------------
 //
 // (c)Team Shinkai Lab
 
@@ -83,7 +77,6 @@ void USBRX_dataParse(void)
     noErr = true;  done = RESP_ERROR;
     wk = USB_RX_pop();              //データを1Byte取り出す
     Serial.print(wk);
-//Ver. 00.03・・・テスト時と通常時で使い分ける
     if (appData.op_mode != MODE::MODE_AVG) {     //通常時
       wk = toupper(wk);               //小文字を大文字に
       if ('A'<=wk&&wk<='Z') {         //5文字目までは英語を待つ
@@ -257,7 +250,6 @@ static uint8_t USBRX_ENJKN(void)
   return RESP_OK;
 }
 
-// ↓↓Ver. 00.03・・・追加↓↓
 /* @brief 平均回数設定
  * @memo テスト用
  */
@@ -293,7 +285,6 @@ static uint8_t USBRX_GOAVG(void)
   CHANGE_MODE(MODE::MODE_AVG);
   return RESP_NO;
 }
-// ↑↑Ver. 00.03・・・追加↑↑
 
 /* @brief モード変更
  */
